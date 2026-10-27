@@ -25,14 +25,22 @@ func contactPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/contact.html")
 }
 
+func newRouter() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", homePage)
+	mux.HandleFunc("GET /home", homePage)
+	mux.HandleFunc("GET /courses", coursePage)
+	mux.HandleFunc("GET /about", aboutPage)
+	mux.HandleFunc("GET /contact", contactPage)
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+	return mux
+}
+
 func main() {
-
-	http.HandleFunc("/home", homePage)
-	http.HandleFunc("/courses", coursePage)
-	http.HandleFunc("/about", aboutPage)
-	http.HandleFunc("/contact", contactPage)
-
-	err := http.ListenAndServe("0.0.0.0:8080", nil)
+	err := http.ListenAndServe("0.0.0.0:8080", newRouter())
 	if err != nil {
 		log.Fatal(err)
 	}
