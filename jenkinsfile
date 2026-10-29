@@ -1,0 +1,60 @@
+
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/ajitkumar09/go-web-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t go-web-app:jenkins .'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh '''
+                    docker stop goapp || true
+                    docker rm goapp || true
+                '''
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                sh '''
+                    docker run -d \
+                    --name goapp \
+                    -p 8081:8080 \
+                    --restart unless-stopped \
+                    go-web-app:jenkins
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                    sleep 5
+                    docker ps
+                    curl -f http://localhost:8081
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Application deployed successfully!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
